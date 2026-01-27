@@ -1,0 +1,5 @@
+{
+  "name": "Use Case Mapper",
+  "description": "A sophisticated conversation analyzer that uses Gemini AI to detect patterns, sentiments, and key themes in JSON conversation reports.",
+  "requestFramePermissions": []
+}
