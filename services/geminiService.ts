@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { Conversation, AnalysisResult, EngineSettings } from "../types";
 
@@ -92,7 +91,10 @@ export const analyzeConversations = async (
     });
 
     try {
-      batchResults.push(JSON.parse(response.text));
+      const text = response.text;
+      if (text) {
+        batchResults.push(JSON.parse(text));
+      }
     } catch (e) {
       console.error("Batch parsing error", e);
     }
@@ -175,7 +177,12 @@ export const analyzeConversations = async (
     }
   });
 
-  const result = JSON.parse(finalResponse.text) as AnalysisResult;
+  const finalText = finalResponse.text;
+  if (!finalText) {
+    throw new Error("Final analysis consolidation returned an empty response.");
+  }
+
+  const result = JSON.parse(finalText) as AnalysisResult;
 
   // Client-side deduplication safety check
   const mergedUseCases: Record<string, any> = {};

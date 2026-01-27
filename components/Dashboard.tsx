@@ -1,4 +1,3 @@
-
 import React, { memo, useState } from 'react';
 import { 
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
@@ -44,6 +43,7 @@ const ConversationList = memo(({
       <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
         {conversations.map((conv) => {
           const displayCount = conv.messages?.length > 0 ? conv.messages.length : (conv.metadata?.totalUtterances || 0);
+          const resolution = conv.metadata?.resolutionStatus || '';
           return (
             <div 
               key={conv.id} 
@@ -53,10 +53,10 @@ const ConversationList = memo(({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-sm text-sm ${
-                    ['RESOLVED', 'Closed', 'true'].includes(conv.metadata?.resolutionStatus) ? 'bg-green-100 text-green-700' :
-                    ['UNRESOLVED', 'Abandoned', 'Open'].includes(conv.metadata?.resolutionStatus) ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
+                    ['RESOLVED', 'Closed', 'true'].includes(resolution) ? 'bg-green-100 text-green-700' :
+                    ['UNRESOLVED', 'Abandoned', 'Open'].includes(resolution) ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'
                   }`}>
-                    {conv.metadata?.resolutionStatus?.charAt(0) || '#'}
+                    {resolution.charAt(0) || '#'}
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors">{conv.id}</h4>
@@ -74,10 +74,10 @@ const ConversationList = memo(({
                   <div className="text-right min-w-[80px]">
                     <div className="text-[9px] uppercase text-gray-400 font-black">Status</div>
                     <div className={`text-[10px] font-black uppercase px-2 py-0.5 rounded inline-block ${
-                      ['RESOLVED', 'Closed', 'true'].includes(conv.metadata?.resolutionStatus) ? 'bg-green-50 text-green-600' :
-                      ['UNRESOLVED', 'Abandoned', 'Open'].includes(conv.metadata?.resolutionStatus) ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-400'
+                      ['RESOLVED', 'Closed', 'true'].includes(resolution) ? 'bg-green-50 text-green-600' :
+                      ['UNRESOLVED', 'Abandoned', 'Open'].includes(resolution) ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-400'
                     }`}>
-                      {conv.metadata?.resolutionStatus || 'N/A'}
+                      {resolution || 'N/A'}
                     </div>
                   </div>
                   <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-all translate-x-0 group-hover:translate-x-1" />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, User, Bot, Clock, Tag, ChevronLeft, Target, BarChart2, Info, Activity } from 'lucide-react';
 import { Conversation } from '../types';
@@ -143,8 +142,8 @@ const ConversationDetail: React.FC<ConversationDetailProps> = ({ conversation, o
                 <div>
                   <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Resolution</span>
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                    ['RESOLVED', 'Closed', 'true'].includes(conversation.metadata?.resolutionStatus) ? 'bg-green-100 text-green-700' :
-                    ['UNRESOLVED', 'Abandoned', 'Open'].includes(conversation.metadata?.resolutionStatus) ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
+                    ['RESOLVED', 'Closed', 'true'].includes(conversation.metadata?.resolutionStatus || '') ? 'bg-green-100 text-green-700' :
+                    ['UNRESOLVED', 'Abandoned', 'Open'].includes(conversation.metadata?.resolutionStatus || '') ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
                   }`}>
                     {conversation.metadata?.resolutionStatus || 'UNKNOWN'}
                   </span>
@@ -182,7 +181,7 @@ const ConversationDetail: React.FC<ConversationDetailProps> = ({ conversation, o
             </div>
 
             {/* Cognitive/Agentic Card if present */}
-            {conversation.metadata?.cognitiveAgentInstances?.length > 0 && (
+            {conversation.metadata?.cognitiveAgentInstances && conversation.metadata.cognitiveAgentInstances.length > 0 && (
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 col-span-full">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <Target className="w-4 h-4 text-orange-500" /> Cognitive Execution
