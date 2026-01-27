@@ -1,15 +1,13 @@
+
 import React, { memo, useState } from 'react';
 import { 
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts';
 import { 
   TrendingUp, Users, MessageSquare, AlertTriangle, CheckCircle2, Info, Lightbulb,
-  ArrowRight, Star, Briefcase, Globe, Calendar, Clock, Loader2, StopCircle, Settings, Play, Cpu, Layers, FastForward, Sparkles, ChevronDown, ChevronUp, Key, ExternalLink
+  ArrowRight, Star, Briefcase, Globe, Calendar, Clock, Loader2, StopCircle, Settings, Play, Cpu, Layers, FastForward, Sparkles, ChevronDown, ChevronUp, Key, Eye, EyeOff, Lock
 } from 'lucide-react';
 import { ConversationReport, AnalysisResult, Conversation, EngineSettings } from '../types';
-
-// The global declaration for window.aistudio was removed because it is already defined 
-// as type AIStudio in the global environment, causing a conflict with this local redeclaration.
 
 interface DashboardProps {
   report: ConversationReport;
@@ -28,6 +26,8 @@ interface DashboardProps {
   };
   engineSettings: EngineSettings;
   setEngineSettings: (s: EngineSettings) => void;
+  apiKey: string;
+  setApiKey: (key: string) => void;
 }
 
 const ConversationList = memo(({ 
@@ -105,15 +105,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   onSelectConversation,
   scopeSettings,
   engineSettings,
-  setEngineSettings
+  setEngineSettings,
+  apiKey,
+  setApiKey
 }) => {
   const [configExpanded, setConfigExpanded] = useState(!analysis);
-
-  const handleSelectKey = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-    }
-  };
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const conversations = report?.conversations || [];
   const totalConvos = conversations.length;
@@ -259,22 +256,35 @@ const Dashboard: React.FC<DashboardProps> = ({
         {configExpanded && (
           <div className="p-8 border-t border-gray-100 animate-fadeIn">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Scope & Key Settings */}
+              {/* Scope & API Key Settings */}
               <div className="space-y-6">
+                {/* API Key Input */}
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">API Connectivity</label>
-                  <button
-                    onClick={handleSelectKey}
-                    className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
-                  >
-                    <Key className="w-4 h-4 text-blue-500" />
-                    Connect Gemini API Key
-                  </button>
-                  <p className="text-[10px] text-gray-400 mt-2">
-                    A paid Google Cloud project key is required for batch analysis. 
-                    <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1 inline-flex items-center gap-0.5">
-                      Billing Docs <ExternalLink className="w-2 h-2" />
-                    </a>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                    <Key className="w-3 h-3 text-blue-500" /> Manual Gemini API Key
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showApiKey ? "text" : "password"}
+                      disabled={isAnalyzing}
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder="Enter your Gemini API key..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-11 pr-12 py-3 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-gray-900 disabled:opacity-50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-200 rounded-lg text-gray-400 transition-colors"
+                    >
+                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 leading-relaxed">
+                    Setting the key here will override any hardcoded environment variables. Your key is persisted locally in your browser.
                   </p>
                 </div>
 
@@ -330,16 +340,22 @@ const Dashboard: React.FC<DashboardProps> = ({
               {/* Engine Settings */}
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">AI Model</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">AI Model Selection</label>
                   <select 
                     disabled={isAnalyzing}
                     value={engineSettings.model}
                     onChange={(e) => setEngineSettings({...engineSettings, model: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-gray-900 disabled:opacity-50"
                   >
-                    <option value="gemini-3-flash-preview">Gemini 3 Flash (Fast & Efficient)</option>
-                    <option value="gemini-3-pro-preview">Gemini 3 Pro (Deep Reasoning)</option>
-                    <option value="gemini-2.5-flash-latest">Gemini 2.5 Flash</option>
+                    <optgroup label="Gemini 3 Series (Latest)">
+                      <option value="gemini-3-pro-preview">Gemini 3 Pro (Deep Reasoning)</option>
+                      <option value="gemini-3-flash-preview">Gemini 3 Flash (Fast & Efficient)</option>
+                    </optgroup>
+                    <optgroup label="Gemini 2.5 Series">
+                      <option value="gemini-2.5-pro-latest">Gemini 2.5 Pro</option>
+                      <option value="gemini-2.5-flash-latest">Gemini 2.5 Flash</option>
+                      <option value="gemini-2.5-flash-lite-latest">Gemini 2.5 Flash Lite</option>
+                    </optgroup>
                   </select>
                 </div>
 
@@ -541,7 +557,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
 
-      {/* Conversation list is now always visible regardless of analysis state */}
       <ConversationList 
         conversations={conversations} 
         onSelectConversation={onSelectConversation} 

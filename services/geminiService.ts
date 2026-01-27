@@ -6,13 +6,13 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 export const analyzeConversations = async (
   conversations: Conversation[],
   settings: EngineSettings,
+  apiKeyOverride?: string,
   onProgress?: (current: number, total: number) => boolean | void,
   onStatus?: (status: 'batching' | 'consolidating') => void
 ): Promise<AnalysisResult> => {
-  // Use a fresh instance with the current API key from the environment
-  const API_KEY = process.env.API_KEY;
+  const API_KEY = apiKeyOverride || process.env.API_KEY;
   if (!API_KEY) {
-    throw new Error("API Key is missing. Please configure it in the settings.");
+    throw new Error("Gemini API Key is missing. Please provide it in the Engine Configuration section.");
   }
 
   const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -25,7 +25,6 @@ export const analyzeConversations = async (
   
   if (onStatus) onStatus('batching');
 
-  // Step 1: Map - Process in batches
   for (let i = 0; i < numBatches; i++) {
     const startTime = Date.now();
 
@@ -112,18 +111,17 @@ export const analyzeConversations = async (
     throw new Error("No analysis data was generated.");
   }
 
-  // Step 2: Reduce - Consolidate results
   if (onStatus) onStatus('consolidating');
   
   const consolidationPrompt = `I have analyzed a conversation report in ${batchResults.length} batches. 
   Here are the raw results: ${JSON.stringify(batchResults)}
   
   Please provide a FINAL, GLOBAL analysis for the dataset:
-  1. MERGE identical or overlapping Use Cases. If the Task and Channel are the same, they MUST be merged.
-  2. SUM the counts for merged use cases.
-  3. Create a unified Executive Summary.
-  4. Aggregate top issues and suggest improvements.
-  5. Average the sentiment distribution.`;
+  1. MERGE identical or overlapping Use Cases.
+  2. SUM counts.
+  3. Executive Summary.
+  4. Top issues.
+  5. Average sentiment.`;
 
   const finalResponse = await ai.models.generateContent({
     model: settings.model,
@@ -183,11 +181,8 @@ export const analyzeConversations = async (
   }
 
   const result = JSON.parse(finalText) as AnalysisResult;
-
-  // Client-side deduplication safety check
   const mergedUseCases: Record<string, any> = {};
   result.identifiedUseCases.forEach(uc => {
-    // Unique key based on vertical, audience, task, and channel
     const key = `${uc.vertical}|${uc.audience}|${uc.task}|${uc.channel}`.toLowerCase().replace(/\s+/g, '');
     if (mergedUseCases[key]) {
       mergedUseCases[key].count += uc.count;

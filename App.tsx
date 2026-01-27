@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   FileSearch, 
   ChevronLeft, 
@@ -19,18 +19,22 @@ const App: React.FC = () => {
   const [selectedConvoId, setSelectedConvoId] = useState<string | number | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Analysis Scope Settings
+  // API Key state management
+  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('GEMINI_API_KEY') || '');
+
+  useEffect(() => {
+    localStorage.setItem('GEMINI_API_KEY', apiKey);
+  }, [apiKey]);
+  
   const [scopeMode, setScopeMode] = useState<'all' | 'count' | 'percent'>('all');
   const [scopeValue, setScopeValue] = useState<number>(100);
 
-  // Engine Configuration Settings
   const [engineSettings, setEngineSettings] = useState<EngineSettings>({
     model: 'gemini-3-flash-preview',
     batchSize: 40,
     rpm: 15
   });
   
-  // Ref to track cancellation
   const isCancelledRef = useRef(false);
 
   const handleUpload = (data: any) => {
@@ -49,42 +53,31 @@ const App: React.FC = () => {
 
       const normalized: Conversation[] = rawList.map((item: any, index: number) => {
         const id = item.conversationId || item.id || `conv-${index}`;
-        
         let rawDate = item.conversationCreated || item.timestamp || item.created;
         if (typeof rawDate === 'number' && rawDate < 10000000000) rawDate *= 1000;
-        
         const dateObj = new Date(rawDate);
         const timestampMs = dateObj.getTime();
-        
         if (!isNaN(timestampMs)) {
           earliestTs = Math.min(earliestTs, timestampMs);
           latestTs = Math.max(latestTs, timestampMs);
         }
-
         const timestamp = isNaN(timestampMs) ? new Date().toISOString() : dateObj.toISOString();
-
         const messages = (item.transcript || item.messages || []).map((m: any) => ({
           role: m.role || (m.participantType === 'USER' ? 'user' : 'agent'),
           text: m.text || m.content || '',
           timestamp: m.timestamp || m.created
         }));
-
         const satisfactionMetric = item.metrics?.find((m: any) => m.code === 'satisfaction_score');
         const resMetric = item.metrics?.find((m: any) => m.code === 'resolution_status');
         const closureStatusMetric = item.metrics?.find((m: any) => m.code === 'InteractionClosureStatus');
         const resolvedValue = resMetric?.value || closureStatusMetric?.value || item.resolution_status;
-
         const ameliaCount = item.metrics?.find((m: any) => m.code === 'amelia_utterance_count')?.value || 0;
         const userCount = item.metrics?.find((m: any) => m.code === 'end_user_utterance_count')?.value || 0;
         const totalUtterances = (typeof ameliaCount === 'number' ? ameliaCount : 0) + (typeof userCount === 'number' ? userCount : 0);
-
         const intentMetric = item.metrics?.find((m: any) => m.code === 'IntentValidation');
         const primaryIntent = item.metrics?.find((m: any) => m.code === 'TriggeredIntent')?.value;
-
         return {
-          id,
-          timestamp,
-          messages,
+          id, timestamp, messages,
           metadata: {
             ...item,
             satisfactionScore: satisfactionMetric?.value,
@@ -112,22 +105,12 @@ const App: React.FC = () => {
   const handleRunAnalysis = async () => {
     if (!report) return;
     
-    // Check for API key if environment supports it
-    if (window.aistudio) {
-      const hasKey = await window.aistudio.hasSelectedApiKey();
-      if (!hasKey) {
-        await window.aistudio.openSelectKey();
-        // Proceeding assuming the key selection dialog was handled
-      }
-    }
-
     setIsAnalyzing(true);
     setIsConsolidating(false);
     isCancelledRef.current = false;
     setProgress({ current: 0, total: 1 });
     setError(null);
 
-    // Filter conversations based on scope settings
     let conversationsToProcess = report.conversations;
     if (scopeMode === 'count') {
       conversationsToProcess = report.conversations.slice(0, scopeValue);
@@ -140,6 +123,7 @@ const App: React.FC = () => {
       const result = await analyzeConversations(
         conversationsToProcess, 
         engineSettings, 
+        apiKey,
         (current, total) => {
           setProgress({ current, total });
           if (isCancelledRef.current) return false; 
@@ -151,12 +135,7 @@ const App: React.FC = () => {
       setAnalysis(result);
     } catch (err: any) {
       if (!isCancelledRef.current) {
-        if (err.message?.includes("Requested entity was not found") || err.message?.includes("API Key")) {
-           setError("API Key Error: Please select a valid paid project API key in settings.");
-           if (window.aistudio) await window.aistudio.openSelectKey();
-        } else {
-           setError(err.message || "Failed to analyze conversations.");
-        }
+        setError(err.message || "Failed to analyze conversations. Ensure your API Key is correctly configured.");
       }
     } finally {
       setIsAnalyzing(false);
@@ -168,7 +147,6 @@ const App: React.FC = () => {
 
   const handleHalt = () => {
     isCancelledRef.current = true;
-    // Explicitly set consolidating true so UI updates immediately
     setIsConsolidating(true);
   };
 
@@ -195,7 +173,6 @@ const App: React.FC = () => {
             Use Case Mapper
           </h1>
         </div>
-
         <div className="flex items-center gap-4">
           {report && (
             <button
@@ -216,7 +193,7 @@ const App: React.FC = () => {
                 Interaction Analysis Console
               </h2>
               <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-                Upload your JSON reports to extract deep behavioral insights. Configure your processing engine for speed or detail.
+                Upload your JSON reports to extract deep behavioral insights.
               </p>
             </div>
             <FileUploader onUpload={handleUpload} />
@@ -234,6 +211,8 @@ const App: React.FC = () => {
             scopeSettings={{ mode: scopeMode, value: scopeValue, setMode: setScopeMode, setValue: setScopeValue }}
             engineSettings={engineSettings}
             setEngineSettings={setEngineSettings}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
           />
         )}
 
