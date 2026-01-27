@@ -1,8 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Conversation, AnalysisResult, EngineSettings } from "../types";
 
-const API_KEY = process.env.API_KEY;
-
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const analyzeConversations = async (
@@ -11,8 +9,10 @@ export const analyzeConversations = async (
   onProgress?: (current: number, total: number) => boolean | void,
   onStatus?: (status: 'batching' | 'consolidating') => void
 ): Promise<AnalysisResult> => {
+  // Use a fresh instance with the current API key from the environment
+  const API_KEY = process.env.API_KEY;
   if (!API_KEY) {
-    throw new Error("API Key is missing.");
+    throw new Error("API Key is missing. Please configure it in the settings.");
   }
 
   const ai = new GoogleGenAI({ apiKey: API_KEY });

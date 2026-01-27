@@ -4,9 +4,12 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, Users, MessageSquare, AlertTriangle, CheckCircle2, Info, Lightbulb,
-  ArrowRight, Star, Briefcase, Globe, Calendar, Clock, Loader2, StopCircle, Settings, Play, Cpu, Layers, FastForward, Sparkles, ChevronDown, ChevronUp
+  ArrowRight, Star, Briefcase, Globe, Calendar, Clock, Loader2, StopCircle, Settings, Play, Cpu, Layers, FastForward, Sparkles, ChevronDown, ChevronUp, Key, ExternalLink
 } from 'lucide-react';
 import { ConversationReport, AnalysisResult, Conversation, EngineSettings } from '../types';
+
+// The global declaration for window.aistudio was removed because it is already defined 
+// as type AIStudio in the global environment, causing a conflict with this local redeclaration.
 
 interface DashboardProps {
   report: ConversationReport;
@@ -105,6 +108,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   setEngineSettings
 }) => {
   const [configExpanded, setConfigExpanded] = useState(!analysis);
+
+  const handleSelectKey = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+    }
+  };
 
   const conversations = report?.conversations || [];
   const totalConvos = conversations.length;
@@ -250,9 +259,26 @@ const Dashboard: React.FC<DashboardProps> = ({
         {configExpanded && (
           <div className="p-8 border-t border-gray-100 animate-fadeIn">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Scope Settings */}
+              {/* Scope & Key Settings */}
               <div className="space-y-6">
                 <div className="space-y-3">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">API Connectivity</label>
+                  <button
+                    onClick={handleSelectKey}
+                    className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
+                  >
+                    <Key className="w-4 h-4 text-blue-500" />
+                    Connect Gemini API Key
+                  </button>
+                  <p className="text-[10px] text-gray-400 mt-2">
+                    A paid Google Cloud project key is required for batch analysis. 
+                    <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-1 inline-flex items-center gap-0.5">
+                      Billing Docs <ExternalLink className="w-2 h-2" />
+                    </a>
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-gray-50">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Analysis Mode</label>
                   <div className="flex bg-gray-100 p-1.5 rounded-xl w-fit">
                     {(['all', 'count', 'percent'] as const).map(mode => (

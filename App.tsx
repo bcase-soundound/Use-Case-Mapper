@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { 
   FileSearch, 
@@ -112,6 +111,16 @@ const App: React.FC = () => {
 
   const handleRunAnalysis = async () => {
     if (!report) return;
+    
+    // Check for API key if environment supports it
+    if (window.aistudio) {
+      const hasKey = await window.aistudio.hasSelectedApiKey();
+      if (!hasKey) {
+        await window.aistudio.openSelectKey();
+        // Proceeding assuming the key selection dialog was handled
+      }
+    }
+
     setIsAnalyzing(true);
     setIsConsolidating(false);
     isCancelledRef.current = false;
@@ -142,7 +151,12 @@ const App: React.FC = () => {
       setAnalysis(result);
     } catch (err: any) {
       if (!isCancelledRef.current) {
-        setError(err.message || "Failed to analyze conversations.");
+        if (err.message?.includes("Requested entity was not found") || err.message?.includes("API Key")) {
+           setError("API Key Error: Please select a valid paid project API key in settings.");
+           if (window.aistudio) await window.aistudio.openSelectKey();
+        } else {
+           setError(err.message || "Failed to analyze conversations.");
+        }
       }
     } finally {
       setIsAnalyzing(false);
