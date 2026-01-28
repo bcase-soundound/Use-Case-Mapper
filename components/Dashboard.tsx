@@ -1,11 +1,10 @@
-
 import React, { memo, useState } from 'react';
 import { 
   ResponsiveContainer, Cell, PieChart, Pie, Tooltip
 } from 'recharts';
 import { 
   TrendingUp, Users, MessageSquare, AlertTriangle, CheckCircle2, Info, Lightbulb,
-  ArrowRight, Star, Briefcase, Globe, Calendar, Clock, Loader2, StopCircle, Settings, Play, Cpu, Layers, FastForward, Sparkles, ChevronDown, ChevronUp, Key, Eye, EyeOff, Lock
+  ArrowRight, Star, Briefcase, Globe, Calendar, Clock, Loader2, StopCircle, Settings, Layers, FastForward, Sparkles, ChevronDown, ChevronUp, Key, Eye, EyeOff, Lock
 } from 'lucide-react';
 import { ConversationReport, AnalysisResult, Conversation, EngineSettings } from '../types';
 
@@ -283,7 +282,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
+                  <p className="text-[10px] text-gray-400 leading-relaxed italic">
                     Setting the key here will override any hardcoded environment variables. Your key is persisted locally in your browser.
                   </p>
                 </div>
@@ -347,14 +346,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                     onChange={(e) => setEngineSettings({...engineSettings, model: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all text-gray-900 disabled:opacity-50"
                   >
-                    <optgroup label="Gemini 3 Series (Latest)">
+                    <optgroup label="Gemini 3 Series">
                       <option value="gemini-3-pro-preview">Gemini 3 Pro (Deep Reasoning)</option>
                       <option value="gemini-3-flash-preview">Gemini 3 Flash (Fast & Efficient)</option>
                     </optgroup>
                     <optgroup label="Gemini 2.5 Series">
-                      <option value="gemini-2.5-pro-latest">Gemini 2.5 Pro</option>
-                      <option value="gemini-2.5-flash-latest">Gemini 2.5 Flash</option>
-                      <option value="gemini-2.5-flash-lite-latest">Gemini 2.5 Flash Lite</option>
+                      <option value="gemini-3-pro-preview">Gemini 2.5 Pro</option>
+                      <option value="gemini-flash-latest">Gemini 2.5 Flash</option>
+                      <option value="gemini-flash-lite-latest">Gemini 2.5 Flash Lite</option>
                     </optgroup>
                   </select>
                 </div>
